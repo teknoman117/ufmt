@@ -268,6 +268,15 @@ pub trait uDisplay {
         W: uWrite + ?Sized;
 }
 
+/// Just like `core::fmt::Display`
+#[allow(non_camel_case_types)]
+pub trait uDisplayHex {
+    /// Formats the value using the given formatter
+    fn fmt<W>(&self, _: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite + ?Sized;
+}
+
 /// Configuration for formatting
 #[allow(non_camel_case_types)]
 pub struct Formatter<'w, W>

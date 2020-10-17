@@ -230,6 +230,10 @@ fn write(input: TokenStream, newline: bool) -> TokenStream {
                     exprs.push(quote!(ufmt::uDisplay::fmt(#pat, f)?;));
                 }
 
+                Piece::DisplayHex => {
+                    exprs.push(quote!(ufmt::uDisplayHex::fmt(#pat, f)?;));
+                }
+
                 Piece::Debug { pretty } => {
                     exprs.push(if pretty {
                         quote!(f.pretty(|f| ufmt::uDebug::fmt(#pat, f))?;)
@@ -294,6 +298,7 @@ impl Parse for Input {
 enum Piece<'a> {
     Debug { pretty: bool },
     Display,
+    DisplayHex,
     Str(Cow<'a, str>),
 }
 
@@ -374,11 +379,13 @@ fn parse<'l>(mut literal: &'l str, span: Span) -> parse::Result<Vec<Piece<'l>>> 
                 const DEBUG: &str = ":?}";
                 const DEBUG_PRETTY: &str = ":#?}";
                 const DISPLAY: &str = "}";
+                const DISPLAY_HEX: &str = ":x}";
                 const ESCAPED_BRACE: &str = "{";
 
                 let head = head.unwrap_or("");
                 if tail.starts_with(DEBUG)
                     || tail.starts_with(DEBUG_PRETTY)
+                    || tail.starts_with(DISPLAY_HEX)
                     || tail.starts_with(DISPLAY)
                 {
                     if buf.is_empty() {
@@ -402,6 +409,10 @@ fn parse<'l>(mut literal: &'l str, span: Span) -> parse::Result<Vec<Piece<'l>>> 
                         pieces.push(Piece::Debug { pretty: true });
 
                         literal = &tail[DEBUG_PRETTY.len()..];
+                    } else if tail.starts_with(DISPLAY_HEX) {
+                        pieces.push(Piece::DisplayHex);
+
+                        literal = &tail[DISPLAY_HEX.len()..];
                     } else {
                         pieces.push(Piece::Display);
 
@@ -415,7 +426,7 @@ fn parse<'l>(mut literal: &'l str, span: Span) -> parse::Result<Vec<Piece<'l>>> 
                 } else {
                     return Err(parse::Error::new(
                         span,
-                        "invalid format string: expected `{{`, `{}`, `{:?}` or `{:#?}`",
+                        "invalid format string: expected `{{`, `{}`, `{:x}`, `{:?}` or `{:#?}`",
                     ));
                 }
             }
@@ -467,7 +478,7 @@ mod tests {
         assert!(super::parse(" {", span).is_err());
         assert!(super::parse("{ ", span).is_err());
         assert!(super::parse("{ {", span).is_err());
-        assert!(super::parse("{:x}", span).is_err());
+        //assert!(super::parse("{:x}", span).is_err());
     }
 
     #[test]

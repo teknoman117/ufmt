@@ -11,12 +11,11 @@
 #![deny(warnings)]
 #![no_std]
 
-use core::{convert::Infallible, str, fmt};
+use core::{convert::Infallible, fmt, str};
 
 pub use heapless::consts;
 use heapless::{ArrayLength, String};
 use ufmt_write::uWrite;
-
 
 macro_rules! assume_unreachable {
     () => {
@@ -141,7 +140,6 @@ where
     }
 }
 
-
 /// An adapter struct allowing to use `ufmt` on types which implement `core::fmt::Write`
 ///
 /// For example:
@@ -156,9 +154,14 @@ where
 /// let mut s = String::new();
 /// uwrite!(WriteAdapter(&mut s), "{:?}", fancy_number);
 /// ```
-pub struct WriteAdapter<W>(pub W) where W: fmt::Write;
+pub struct WriteAdapter<W>(pub W)
+where
+    W: fmt::Write;
 
-impl<W> uWrite for WriteAdapter<W> where W: fmt::Write {
+impl<W> uWrite for WriteAdapter<W>
+where
+    W: fmt::Write,
+{
     type Error = fmt::Error;
 
     fn write_char(&mut self, c: char) -> Result<(), Self::Error> {
